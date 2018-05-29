@@ -4,6 +4,7 @@
 #include <string.h>
 #include "lecturaArchivos.h"
 #include "registro.h"
+#include "pipeline.h"
 
 // Entrada: - No posee
 // Salida:	- No posee

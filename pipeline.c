@@ -31,10 +31,7 @@ void insertarEtapa(Etapa* pipeline, int id) {
 
 Etapa* removerEtapa(Etapa* pipeline) {
   if (pipeline != NULL) {
-    Etapa* nuevoPipeline = pipeline->siguiente;
-    eliminarEtapa(pipeline);
-    return nuevoPipeline;
+    return pipeline->siguiente;
   }
-
   return NULL;
 }

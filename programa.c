@@ -20,4 +20,11 @@ void iniciar() {
   //
   //
 
+  Etapa* pipeline = crearEtapa(1);
+
+  for (int i = 2 ; i < 6; i ++) {
+    insertarEtapa(pipeline, i);
+  }
+  
+
 }
