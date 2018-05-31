@@ -9,9 +9,10 @@
 // registro y su respectivo nombre
 
 typedef struct Registro {
-  int valor;
   char* nombre;
+  int valor;
   int uso;
+  int* memoria;  
 } Registro;
 
 // Entrada: - No posee

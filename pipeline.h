@@ -5,8 +5,13 @@
 // Representación de una etapa de Pipeline similar
 // a la utilizada para los nodos de una lista enlazada
 typedef struct Etapa{
-  int id;
   struct Etapa* siguiente;
+  int id;
+  char* extracto1;
+  char* extracto2;
+  char* extracto3;
+  char* extracto4;
+
 } Etapa;
 
 
@@ -17,10 +22,14 @@ typedef struct Etapa{
 // correspondiente (id).
 Etapa* crearEtapa(int id);
 
-void eliminarEtapa(Etapa* etapa);
+void liberarEtapa(Etapa* etapa);
 
-void insertarEtapa(Etapa* pipeline, int id);
+void insertarEtapa(Etapa** pipeline, Etapa* nueveEtapa);
 
-Etapa* removerEtapa(Etapa* pipeline);
+void removerEtapa(Etapa** pipeline);
 
-Etapa* crearPipeline();
+Etapa* crearPipeline(int nroEtapas);
+
+int largo(Etapa* pipeline);
+
+void imprimirPipeline(Etapa* pipeline);
