@@ -5,6 +5,11 @@
 #include "lecturaArchivos.h"
 #include "registro.h"
 #include "pipeline.h"
+#include "hazard.h"
+
+void obtenerTipoInstruccion(char* instruccion, int* tipo);
+
+void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros);
 
 // Entrada: - No posee
 // Salida:	- No posee

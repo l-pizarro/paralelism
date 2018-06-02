@@ -1,4 +1,5 @@
 #include "programa.h"
+#include "string.h"
 
 void print(int largo, char** arreglo) {
   int i;
@@ -7,7 +8,21 @@ void print(int largo, char** arreglo) {
   }
 }
 
-void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros, Etapa* pipeline) {
+void obtenerTipoInstruccion(char* instruccion, int* tipo) {
+  if (!strcmp(instruccion, "add") || !strcmp(instruccion, "sub")) {
+
+  }
+}
+
+void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) {
+
+  Control* control = control();
+
+  IFID* IFID   = ifId();
+  IDEX* IDEX   = idEx();
+  EXMEM* EXMEM = exMem();
+  MEMWB* MEMWB = memWb();
+
   int indice = 0;
 
   while (indice < nroInstrucciones) {
@@ -22,20 +37,6 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros, 
         aux4 = strtok(NULL, " )(,:\n");
       }
     }
-
-    Etapa* nuevaEtapa = crearEtapa(0);
-    nuevaEtapa->extracto1 =  aux1;
-    nuevaEtapa->extracto2 =  aux2;
-    nuevaEtapa->extracto3 =  aux3;
-    nuevaEtapa->extracto4 =  aux4;
-
-    insertarEtapa(&pipeline, nuevaEtapa);
-
-    // Aqui se supone que pasa lo lindo
-    imprimirPipeline(pipeline);
-    printf("\n");
-
-    removerEtapa(&pipeline);
     indice++;
   }
 }
@@ -50,8 +51,7 @@ void iniciar() {
   char** infoRegistros = leerArchivo(&nroRegistros);
 
   Registro* registros  = crearRegistros(nroRegistros, infoRegistros);
-  Etapa* pipeline      = crearPipeline(5);
 
-  ejecutar(instrucciones, nroInstrucciones, &registros, pipeline);
+  ejecutar(instrucciones, nroInstrucciones, &registros);
 
 }

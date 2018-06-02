@@ -11,8 +11,7 @@
 typedef struct Registro {
   char* nombre;
   int valor;
-  int uso;
-  int* memoria;  
+  int* memoria;
 } Registro;
 
 // Entrada: - No posee
