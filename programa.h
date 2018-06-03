@@ -4,8 +4,8 @@
 #include <string.h>
 #include "lecturaArchivos.h"
 #include "registro.h"
-#include "pipeline.h"
-#include "hazard.h"
+#include "buffer.h"
+#include "control.h"
 
 void obtenerTipoInstruccion(char* instruccion, int* tipo);
 

@@ -12,7 +12,7 @@ typedef struct IFID {
 } IFID;
 
 typedef struct IDEX {
-  char* instruccion;
+  int instruccion;
   int registroRs;
   int registroRt;
   int registroRd;
@@ -28,31 +28,34 @@ typedef struct IDEX {
   int memRead;
   int memWrite;
   int memtoReg;
-  int memWrite;
+  int regWrite;
 
 } IDEX;
 
 typedef struct EXMEM {
-  int aluResult;
+  int aluResultado;
+  int registroRs;
+  int registroRt;
   int registroRd;
-  int regDst;
+  int direccionMemoria;
 
   // Control
   int branch;
   int memRead;
   int memWrite;
   int memtoReg;
-  int memWrite;
+  int regWrite;
 
 } EXMEM;
 
 typedef struct MEMWB {
-  int memToRegister;
-  int registroRd;
+  int aluResultado;
+  int registroDestino;
+  int dataMemoria;
 
   // Control
   int memtoReg;
-  int memWrite;
+  int regWrite;
 } MEMWB;
 
 
@@ -63,3 +66,8 @@ IDEX* idEx();
 EXMEM* exMem();
 
 MEMWB* memWb();
+
+void printIFID(IFID* buffer);
+void printIDEX(IDEX* buffer);
+void printEXMEM(EXMEM* buffer);
+void printMEMWB(MEMWB* buffer);

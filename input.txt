@@ -1,2 +1,2 @@
-/Users/bloem/Desktop/Lab2Orga/M1.asm
-/Users/bloem/Desktop/Lab2Orga/M2.txt
+/Users/bloem/Desktop/Test/M1.asm
+/Users/bloem/Desktop/Test/M2.txt

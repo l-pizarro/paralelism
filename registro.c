@@ -12,7 +12,6 @@ Registro* crearRegistros(int nroRegistros, char** infoRegistros) {
       strcpy(registros[i].nombre, token);
       token = strtok(NULL, " )(,");
       registros[i].valor   = atoi(token);
-      registros[i].memoria = NULL;
   }
 
   return registros;
