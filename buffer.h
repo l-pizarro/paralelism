@@ -34,8 +34,6 @@ typedef struct IDEX {
 
 typedef struct EXMEM {
   int aluResultado;
-  int registroRs;
-  int registroRt;
   int registroRd;
   int direccionMemoria;
 
@@ -50,7 +48,7 @@ typedef struct EXMEM {
 
 typedef struct MEMWB {
   int aluResultado;
-  int registroDestino;
+  int registroRd;
   int dataMemoria;
 
   // Control

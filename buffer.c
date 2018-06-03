@@ -33,8 +33,8 @@ void printIDEX(IDEX* buffer) {
   printf("  Sig:%4d\n", buffer->signoExtendido);
 }
 void printEXMEM(EXMEM* buffer) {
-  printf("[ EX/MEM ] >  Alu:%5d  Dir:%4d  rs:%5d  rt:%5d  rd:%5d\n", buffer->aluResultado, buffer->direccionMemoria, buffer->registroRs, buffer->registroRt, buffer->registroRd);
+  printf("[ EX/MEM ] >  Alu:%5d  Dir:%4d  rd:%5d  RWr:%4d\n", buffer->aluResultado, buffer->direccionMemoria, buffer->registroRd, buffer->regWrite);
 }
 void printMEMWB(MEMWB* buffer) {
-  printf("[ MEM/WB ] >  Alu:%5d  Reg:%4d  DaM:%4d\n", buffer->aluResultado, buffer->registroDestino, buffer->dataMemoria);
+  printf("[ MEM/WB ] >  Alu:%5d  Reg:%4d  DaM:%4d\n", buffer->aluResultado, buffer->registroRd, buffer->dataMemoria);
 }
