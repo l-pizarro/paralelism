@@ -25,16 +25,16 @@ MEMWB* memWb() {
 }
 
 void printIFID(IFID* buffer) {
-  printf("[ IF/ID ] >  %s %s %s %s",buffer->extracto1,buffer->extracto2,buffer->extracto3,buffer->extracto4);
-  printf(" PC: %d  PC+4: %d\n", buffer->instruccionActual,buffer->instruccionSgte);
+  printf("[ IF/ID  ] >  Ex:%6s  Ex:%5s  Ex:%5s  Ex:%5s",buffer->extracto1,buffer->extracto2,buffer->extracto3,buffer->extracto4);
+  printf("  PC:%5d  PC+4:%3d\n", buffer->instruccionActual,buffer->instruccionSgte);
 }
 void printIDEX(IDEX* buffer) {
-  printf("[ ID/EX ] >  Inst:%d rs:%d rt:%d rd:%d",buffer->instruccion,buffer->registroRs,buffer->registroRt,buffer->registroRd);
-  printf(" Sign: %d\n", buffer->signoExtendido);
+  printf("[ ID/EX  ] >  Ins:%5d  rs:%5d  rt:%5d  rd:%5d",buffer->instruccion,buffer->registroRs,buffer->registroRt,buffer->registroRd);
+  printf("  Sig:%4d\n", buffer->signoExtendido);
 }
 void printEXMEM(EXMEM* buffer) {
-  printf("[ EX/MEM ] >  Alu:%d Direc:%d rs:%d rt%d rd:%d\n", buffer->aluResultado, buffer->direccionMemoria, buffer->registroRs, buffer->registroRt, buffer->registroRd);
+  printf("[ EX/MEM ] >  Alu:%5d  Dir:%4d  rs:%5d  rt:%5d  rd:%5d\n", buffer->aluResultado, buffer->direccionMemoria, buffer->registroRs, buffer->registroRt, buffer->registroRd);
 }
 void printMEMWB(MEMWB* buffer) {
-  printf("[ MEM/WB ]  >  Alu:%d Reg:%d DataMem:%d\n", buffer->aluResultado, buffer->registroDestino, buffer->dataMemoria);
+  printf("[ MEM/WB ] >  Alu:%5d  Reg:%4d  DaM:%4d\n", buffer->aluResultado, buffer->registroDestino, buffer->dataMemoria);
 }
