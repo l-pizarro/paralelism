@@ -1,6 +1,6 @@
 #include "control.h"
 
-Control* createControl() {
+Control* crearControl() {
   Control* control = (Control*)malloc(sizeof(Control));
 
   control->regDst = 0;

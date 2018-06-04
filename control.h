@@ -15,6 +15,6 @@ typedef struct Control {
 } Control;
 
 
-Control* createControl();
+Control* crearControl();
 
 void actualizarControl(Control** control, int tipoInstruccion);

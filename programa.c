@@ -1,5 +1,6 @@
 #include "programa.h"
-#include "string.h"
+
+#define SEPARADOR " ,():\n"
 
 void print(int largo, char** arreglo) {
   int i;
@@ -66,135 +67,252 @@ void obtenerNroRegistro(Registro** registros, char* registro, int* nroRegistro) 
 
 void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) {
 
-  IFID* IFID   = ifId();
-  IDEX* IDEX   = idEx();
+  IFID*  IFID  = ifId();
+  IDEX*  IDEX  = idEx();
   EXMEM* EXMEM = exMem();
   MEMWB* MEMWB = memWb();
+  Control* CONTROL = crearControl();
 
-  Control* control = createControl();
+  int indice  = 0;
 
-  int* memoria = (int*)calloc(128,sizeof(int));
-  memoria[100] = 33;
-
-  int IF  = 1;
-  int ID  = 0;
-  int EX  = 0;
-  int MEM = 0;
-  int WB  = 0;
-  int indice = 0;
-  int tipoInstruccion = 0;
-
+  int* MEMORIA = (int*)calloc(128, sizeof(int));
+  MEMORIA[4] = 7;
 
   while (indice < nroInstrucciones + 4) {
 
-    char* aux1 = NULL;
-    char* aux2 = NULL;
-    char* aux3 = NULL;
-    char* aux4 = NULL;
+    char* aux1  = NULL;
+    char* aux2  = NULL;
+    char* aux3  = NULL;
+    char* aux4  = NULL;
 
-    //printf("=====%2d =====================================================================\n\n", indice);
+    int rs           = 0;
+    int rt           = 0;
+    int rd           = 0;
+    int offset       = 0;
+    int instruccion  = 0;
+    int aluResultado = 0;
+    int direccionMem = 0;
+    int regDestinoEx = 0;
+    int datoMemoria  = 0;
+    int datoRegistro = 0;
+    int destino      = 0;
+    int forwardA     = 0;
+    int forwardB     = 0;
 
-    // printf("Antes\n");
-    // printIFID(IFID);
-    // printIDEX(IDEX);
-    // printEXMEM(EXMEM);
-    // printMEMWB(MEMWB);
-
-    // WB
-    if (WB && indice < nroInstrucciones + 4) {
-
-      if (MEMWB->memtoReg == 1 && MEMWB->regWrite == 1) {
-        ((*registros)[MEMWB->registroRd]).valor = MEMWB->dataMemoria;
-      }
-      else if (MEMWB->memtoReg == 0 && MEMWB->regWrite == 1){
-        ((*registros)[MEMWB->registroRd]).valor = MEMWB->aluResultado;
-      }
-
+    // ETAPA IF
+    if (indice < nroInstrucciones) {
+      aux1  = strtok(instrucciones[indice], SEPARADOR);
+      aux2  = strtok(NULL, SEPARADOR);
+      aux3  = strtok(NULL, SEPARADOR);
+      aux4  = strtok(NULL, SEPARADOR);
     }
 
-    // MEM
-    if (MEM && indice < nroInstrucciones + 3) {
-      if (EXMEM->regWrite && (EXMEM->registroRd == IDEX->registroRs)) {
-        printf("  > [MEM - %d] ForwardA = 01 !!\n\n", indice);
-       }
-      if (MEMWB->regWrite && (MEMWB->registroRd == IDEX->registroRt)) {
-        printf("  > [MEM - %d] ForwardB = 01 !!\n\n", indice);
-      }
+    // ETAPA ID
+    if (indice > 0 && indice < nroInstrucciones + 1) {
+      obtenerTipoInstruccion(IFID->extracto1, &instruccion);
+      actualizarControl(&CONTROL, instruccion);
 
-      if (EXMEM->memRead == 1 && EXMEM->memWrite == 0) {
-        MEMWB->dataMemoria      = memoria[EXMEM->direccionMemoria];
-        MEMWB->registroRd  = EXMEM->registroRd;
+      if (instruccion < 5) {
+        obtenerNroRegistro(registros, IFID->extracto2, &rd);
+        obtenerNroRegistro(registros, IFID->extracto3, &rs);
+        obtenerNroRegistro(registros, IFID->extracto4, &rt);
       }
-      else if (EXMEM->memRead == 0 && EXMEM->memWrite == 1) {
-
+      else if (instruccion < 7) {
+        obtenerNroRegistro(registros, IFID->extracto2, &rt);
+        obtenerNroRegistro(registros, IFID->extracto3, &rs);
+        offset = atoi(IFID->extracto4);
+      }
+      else if (instruccion < 9){
+        obtenerNroRegistro(registros, IFID->extracto2, &rt);
+        obtenerNroRegistro(registros, IFID->extracto4, &rs);
+        offset = atoi(IFID->extracto3);
       }
       else {
-        MEMWB->aluResultado     = EXMEM->aluResultado;
-        MEMWB->registroRd  = EXMEM->registroRd;
-      }
 
-      MEMWB->memtoReg = EXMEM->memtoReg;
-      MEMWB->regWrite = EXMEM->regWrite;
+      }
     }
 
-    // EX
-    if (EX && indice < nroInstrucciones + 2) {
-      //printEXMEM(EXMEM);
-
-      // printf("  Forwarding EX Ciclo %d\n", indice);
-      // printf("      EX/MEM.regWrite:%5d\n", EXMEM->regWrite);
-      // printf("      EX/MEM.registerRd:%3d\n", EXMEM->registroRd);
-      // printf("      ID/EX.registerRt:%4d\n", IDEX->registroRt);
-      // printf("      ID/EX.registerRs:%4d\n", IDEX->registroRs);
+    // ETAPA EX
+    if (indice > 1 && indice < nroInstrucciones + 2) {
+      forwardA = 0;
+      forwardB = 0;
 
       if (EXMEM->regWrite && (EXMEM->registroRd == IDEX->registroRs)) {
-        printf("  > [EX  - %d] ForwardA = 10 !!\n\n", indice);
+        forwardA = 1;
       }
-
       if (EXMEM->regWrite && (EXMEM->registroRd == IDEX->registroRt)) {
-        printf("  > [EX  - %d] ForwardB = 10 !!\n\n", indice);
+        forwardB = 1;
+      }
+      if (MEMWB->regWrite && (MEMWB->destino == IDEX->registroRs)) {
+        forwardA = 2;
+      }
+      if (MEMWB->regWrite && (MEMWB->destino == IDEX->registroRt)) {
+        forwardB = 2;
       }
 
       switch (IDEX->instruccion) {
         case 1:
-        EXMEM->registroRd   = IDEX->registroRd;
-        EXMEM->aluResultado = ((*registros)[IDEX->registroRs]).valor + ((*registros)[IDEX->registroRt]).valor;
+        regDestinoEx = IDEX->registroRd;
+        if (forwardA == 1 && forwardB == 1) {
+          aluResultado = EXMEM->aluResultado + EXMEM->aluResultado;
+        }
+        else if (forwardA == 1) {
+          aluResultado = EXMEM->aluResultado + ((*registros)[IDEX->registroRt]).valor;
+        }
+        else if (forwardB == 1) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor + EXMEM->aluResultado;
+        }
+        else if (forwardA == 2 && forwardB == 2) {
+          aluResultado = MEMWB->datoRegistro + MEMWB->datoRegistro;
+        }
+        else if (forwardA == 2) {
+          aluResultado = MEMWB->datoRegistro + ((*registros)[IDEX->registroRt]).valor;
+        }
+        else if (forwardB == 2) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor + MEMWB->datoRegistro;
+        }
+        else {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor + ((*registros)[IDEX->registroRt]).valor;
+        }
         break;
-
         case 2:
-        EXMEM->registroRd   = IDEX->registroRd;
-        EXMEM->aluResultado = ((*registros)[IDEX->registroRs]).valor - ((*registros)[IDEX->registroRt]).valor;
+        regDestinoEx = IDEX->registroRd;
+        if (forwardA == 1 && forwardB == 1) {
+          aluResultado = EXMEM->aluResultado - EXMEM->aluResultado;
+        }
+        else if (forwardA == 1) {
+          aluResultado = EXMEM->aluResultado - ((*registros)[IDEX->registroRt]).valor;
+        }
+        else if (forwardB == 1) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor - EXMEM->aluResultado;
+        }
+        else if (forwardA == 2 && forwardB == 2) {
+          aluResultado = MEMWB->datoRegistro - MEMWB->datoRegistro;
+        }
+        else if (forwardA == 2) {
+          aluResultado = MEMWB->datoRegistro - ((*registros)[IDEX->registroRt]).valor;
+        }
+        else if (forwardB == 2) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor - MEMWB->datoRegistro;
+        }
+        else {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor - ((*registros)[IDEX->registroRt]).valor;
+        }
         break;
-
         case 3:
-        EXMEM->registroRd   = IDEX->registroRd;
-        EXMEM->aluResultado = ((*registros)[IDEX->registroRs]).valor * ((*registros)[IDEX->registroRt]).valor;
+        regDestinoEx = IDEX->registroRd;
+        if (forwardA == 1 && forwardB == 1) {
+          aluResultado = EXMEM->aluResultado * EXMEM->aluResultado;
+        }
+        else if (forwardA == 1) {
+          aluResultado = EXMEM->aluResultado * ((*registros)[IDEX->registroRt]).valor;
+        }
+        else if (forwardB == 1) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor * EXMEM->aluResultado;
+        }
+        else if (forwardA == 2 && forwardB == 2) {
+          aluResultado = MEMWB->datoRegistro * MEMWB->datoRegistro;
+        }
+        else if (forwardA == 2) {
+          aluResultado = MEMWB->datoRegistro * ((*registros)[IDEX->registroRt]).valor;
+        }
+        else if (forwardB == 2) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor * MEMWB->datoRegistro;
+        }
+        else {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor * ((*registros)[IDEX->registroRt]).valor;
+        }
         break;
-
         case 4:
-        EXMEM->registroRd   = IDEX->registroRd;
-        EXMEM->aluResultado = ((*registros)[IDEX->registroRs]).valor / ((*registros)[IDEX->registroRt]).valor;
+        regDestinoEx = IDEX->registroRd;
+        if (forwardA == 1 && forwardB == 1) {
+          aluResultado = EXMEM->aluResultado / EXMEM->aluResultado;
+        }
+        else if (forwardA == 1) {
+          aluResultado = EXMEM->aluResultado / ((*registros)[IDEX->registroRt]).valor;
+        }
+        else if (forwardB == 1) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor / EXMEM->aluResultado;
+        }
+        else if (forwardA == 2 && forwardB == 2) {
+          aluResultado = MEMWB->datoRegistro / MEMWB->datoRegistro;
+        }
+        else if (forwardA == 2) {
+          aluResultado = MEMWB->datoRegistro / ((*registros)[IDEX->registroRt]).valor;
+        }
+        else if (forwardB == 2) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor / MEMWB->datoRegistro;
+        }
+        else {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor / ((*registros)[IDEX->registroRt]).valor;
+        }
         break;
-
         case 5:
-        EXMEM->registroRd   = IDEX->registroRs;
-        EXMEM->aluResultado = ((*registros)[IDEX->registroRt]).valor + IDEX->signoExtendido;
+        regDestinoEx = IDEX->registroRt;
+        if (forwardA == 1) {
+          aluResultado =  EXMEM->aluResultado + IDEX->signoExtendido;
+        }
+        else if (forwardA == 2) {
+          aluResultado =  MEMWB->datoRegistro + IDEX->signoExtendido;
+        }
+        else {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor + IDEX->signoExtendido;
+        }
         break;
-
         case 6:
-        EXMEM->registroRd   = IDEX->registroRs;
-        EXMEM->aluResultado = ((*registros)[IDEX->registroRt]).valor - IDEX->signoExtendido;
+        regDestinoEx = IDEX->registroRt;
+        if (forwardA == 1) {
+          aluResultado =  EXMEM->aluResultado - IDEX->signoExtendido;
+        }
+        else if (forwardA == 2) {
+          aluResultado =  MEMWB->datoRegistro - IDEX->signoExtendido;
+        }
+        else {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor - IDEX->signoExtendido;
+        }
         break;
-
         case 7:
-        EXMEM->registroRd = IDEX->registroRs;
-        EXMEM->direccionMemoria = (abs(((*registros)[IDEX->registroRt]).valor) + (IDEX->signoExtendido/4))%128;
+        regDestinoEx = IDEX->registroRt;
+        if (forwardA == 1) {
+          direccionMem = (abs(EXMEM->aluResultado) + (IDEX->signoExtendido/4))%128;
+        }
+        else if (forwardA == 2) {
+          direccionMem = (abs(MEMWB->datoRegistro) + (IDEX->signoExtendido/4))%128;
+        }
+        else {
+          direccionMem = (abs(((*registros)[IDEX->registroRs]).valor) + (IDEX->signoExtendido/4))%128;
+        }
         break;
-
         case 8:
-        memoria[(abs(((*registros)[IDEX->registroRs]).valor) + (IDEX->signoExtendido/4))%128] = ((*registros)[IDEX->registroRt]).valor;
+        if (forwardA == 1 && forwardB == 1) {
+          aluResultado = EXMEM->aluResultado;
+          direccionMem = (abs(EXMEM->aluResultado) + (IDEX->signoExtendido/4))%128;
+        }
+        else if (forwardA == 1) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor;
+          direccionMem = (abs(EXMEM->aluResultado) + (IDEX->signoExtendido/4))%128;
+        }
+        else if (forwardB == 1) {
+          aluResultado = EXMEM->aluResultado;
+          direccionMem = (abs(((*registros)[IDEX->registroRs]).valor) + (IDEX->signoExtendido/4))%128;
+        }
+        else if (forwardA == 2 && forwardB == 2) {
+          aluResultado = MEMWB->datoRegistro;
+          direccionMem = (abs(MEMWB->datoRegistro) + (IDEX->signoExtendido/4))%128;
+        }
+        else if (forwardA == 2) {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor;
+          direccionMem = (abs(MEMWB->datoRegistro) + (IDEX->signoExtendido/4))%128;
+        }
+        else if (forwardB == 2) {
+          aluResultado = MEMWB->datoRegistro;
+          direccionMem = (abs(((*registros)[IDEX->registroRt]).valor) + (IDEX->signoExtendido/4))%128;
+        }
+        else {
+          aluResultado = ((*registros)[IDEX->registroRs]).valor;
+          direccionMem = (abs(((*registros)[IDEX->registroRt]).valor) + (IDEX->signoExtendido/4))%128;
+        }
         break;
-
         case 9:
         break;
         case 10:
@@ -202,178 +320,73 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
         default:
         break;
       }
-
-      EXMEM->branch   = IDEX->branch;
-      EXMEM->memRead  = IDEX->memRead;
-      EXMEM->memWrite = IDEX->memWrite;
-      EXMEM->memtoReg = IDEX->memtoReg;
-      EXMEM->regWrite = IDEX->regWrite;
-
-      //printEXMEM(EXMEM);
-      //printf("\n\n");
-
     }
 
-    // ID
-    if (ID && indice < nroInstrucciones + 1) {
-
-      obtenerTipoInstruccion(IFID->extracto1, &tipoInstruccion);
-      actualizarControl(&control, tipoInstruccion);
-      int i, j, k;
-      switch (tipoInstruccion) {
-
-        // add
-        case 1:
-        obtenerNroRegistro(registros, IFID->extracto2, &i);
-        obtenerNroRegistro(registros, IFID->extracto3, &j);
-        obtenerNroRegistro(registros, IFID->extracto4, &k);
-        IDEX->registroRd = i;
-        IDEX->registroRs = j;
-        IDEX->registroRt = k;
-        break;
-
-        // sub
-        case 2:
-        obtenerNroRegistro(registros, IFID->extracto2, &i);
-        obtenerNroRegistro(registros, IFID->extracto3, &j);
-        obtenerNroRegistro(registros, IFID->extracto4, &k);
-        IDEX->registroRd = i;
-        IDEX->registroRs = j;
-        IDEX->registroRt = k;
-        break;
-
-        // mul
-        case 3:
-        obtenerNroRegistro(registros, IFID->extracto2, &i);
-        obtenerNroRegistro(registros, IFID->extracto3, &j);
-        obtenerNroRegistro(registros, IFID->extracto4, &k);
-        IDEX->registroRd = i;
-        IDEX->registroRs = j;
-        IDEX->registroRt = k;
-        break;
-
-        // div
-        case 4:
-        obtenerNroRegistro(registros, IFID->extracto2, &i);
-        obtenerNroRegistro(registros, IFID->extracto3, &j);
-        obtenerNroRegistro(registros, IFID->extracto4, &k);
-        IDEX->registroRd = i;
-        IDEX->registroRs = j;
-        IDEX->registroRt = k;
-        break;
-
-        // addi
-        case 5:
-        obtenerNroRegistro(registros, IFID->extracto2, &i);
-        obtenerNroRegistro(registros, IFID->extracto3, &j);
-        IDEX->registroRs     = i;
-        IDEX->registroRt     = j;
-        IDEX->signoExtendido = atoi(IFID->extracto4);
-        break;
-
-        // subi
-        case 6:
-        obtenerNroRegistro(registros, IFID->extracto2, &i);
-        obtenerNroRegistro(registros, IFID->extracto3, &j);
-        IDEX->registroRs     = i;
-        IDEX->registroRt     = j;
-        IDEX->signoExtendido = atoi(IFID->extracto4);
-        break;
-
-        // lw
-        case 7:
-        obtenerNroRegistro(registros, IFID->extracto2, &i);
-        obtenerNroRegistro(registros, IFID->extracto4, &j);
-        IDEX->registroRt     = i;
-        IDEX->signoExtendido = atoi(IFID->extracto3);
-        IDEX->registroRs     = j;
-        break;
-
-        case 8:
-        obtenerNroRegistro(registros, IFID->extracto2, &i);
-        obtenerNroRegistro(registros, IFID->extracto4, &j);
-        IDEX->registroRt     = i;
-        IDEX->signoExtendido = atoi(IFID->extracto3);
-        IDEX->registroRs     = j;
-        break;
-
-        default:
-        break;
+    // ETAPA MEM
+    if (indice > 2 && indice < nroInstrucciones + 3) {
+      if (EXMEM->memRead == 1 && EXMEM->memWrite == 0) {
+        destino      = EXMEM->registroRd;
+        datoMemoria = MEMORIA[EXMEM->direccionMemoria];
       }
-
-      IDEX->regDst      = control->regDst;
-      IDEX->aluOp0      = control->aluOp0;
-      IDEX->aluOp1      = control->aluOp1;
-      IDEX->aluSrc      = control->aluSrc;
-      IDEX->branch      = control->branch;
-      IDEX->memRead     = control->memRead;
-      IDEX->memWrite    = control->memWrite;
-      IDEX->memtoReg    = control->memtoReg;
-      IDEX->regWrite    = control->regWrite;
-      IDEX->instruccion = tipoInstruccion;
-
-    }
-
-    // IF
-    if (IF && indice < nroInstrucciones) {
-
-      aux1 = strtok(instrucciones[indice], " )(,:\n");
-      aux2 = strtok(NULL, " )(,:\n");
-
-      if (aux2 != NULL) {
-        aux3 = strtok(NULL, " )(,:\n");
-        if (aux3 != NULL) {
-          aux4 = strtok(NULL, " )(,:\n");
-        }
-      }
-
-      IFID->instruccionSgte   = indice + 1;
-      IFID->instruccionActual = indice;
-      IFID->extracto1         = aux1;
-      IFID->extracto2         = aux2;
-      IFID->extracto3         = aux3;
-      IFID->extracto4         = aux4;
-
-    }
-
-
-    if (IF) {
-      if (ID) {
-        if (EX) {
-          if (MEM) {
-            WB = 1;
-          }
-          else {
-            MEM = 1;
-          }
-        }
-        else {
-          EX = 1;
-        }
+      else if (EXMEM->memRead == 0 && EXMEM->memWrite == 1) {
+        MEMORIA[EXMEM->direccionMemoria] = EXMEM->aluResultado;
       }
       else {
-        ID = 1;
+        datoRegistro = EXMEM->aluResultado;
+        destino      = EXMEM->registroRd;
       }
     }
 
-    // printf("Despues\n");
-    // printIFID(IFID);
-    // printIDEX(IDEX);
-    // printEXMEM(EXMEM);
-    // printMEMWB(MEMWB);
-    //printf("==============================================================================\n\n");
-    indice++;
+    // ETAPA WB
+    if (indice > 3 && indice < nroInstrucciones + 4) {
+      if (MEMWB->memtoReg == 1 && MEMWB->regWrite == 1) {
+        ((*registros)[MEMWB->destino]).valor = MEMWB->datoMemoria;
+      }
+      else if (MEMWB->memtoReg == 0 && MEMWB->regWrite == 1){
+        ((*registros)[MEMWB->destino]).valor = MEMWB->datoRegistro;
+      }
+    }
+
+    // PUSH INFORMACION
+    // MEM
+    MEMWB->datoRegistro = datoRegistro;
+    MEMWB->destino      = destino;
+    MEMWB->datoMemoria  = datoMemoria;
+    MEMWB->memtoReg     = EXMEM->memtoReg;
+    MEMWB->regWrite     = EXMEM->regWrite;
+    // EX
+    EXMEM->aluResultado     = aluResultado;
+    EXMEM->registroRd       = regDestinoEx;
+    EXMEM->direccionMemoria = direccionMem;
+    EXMEM->branch           = IDEX->branch;
+    EXMEM->memRead          = IDEX->memRead;
+    EXMEM->memWrite         = IDEX->memWrite;
+    EXMEM->memtoReg         = IDEX->memtoReg;
+    EXMEM->regWrite         = IDEX->regWrite;
+    // ID
+    IDEX->instruccion    = instruccion;
+    IDEX->registroRs     = rs;
+    IDEX->registroRt     = rt;
+    IDEX->registroRd     = rd;
+    IDEX->signoExtendido = offset;
+    IDEX->regDst         = CONTROL->regDst;
+    IDEX->aluOp0         = CONTROL->aluOp0;
+    IDEX->aluOp1         = CONTROL->aluOp1;
+    IDEX->aluSrc         = CONTROL->aluSrc;
+    IDEX->branch         = CONTROL->branch;
+    IDEX->memRead        = CONTROL->memRead;
+    IDEX->memWrite       = CONTROL->memWrite;
+    IDEX->memtoReg       = CONTROL->memtoReg;
+    IDEX->regWrite       = CONTROL->regWrite;
+    // IF
+    IFID->extracto1 = aux1;
+    IFID->extracto2 = aux2;
+    IFID->extracto3 = aux3;
+    IFID->extracto4 = aux4;
+
+    indice ++;
   }
 
-  printf("\n");
-  for (int n = 0; n < 32; n++) {
-    printf("%5s: %3d\n", ((*registros)[n]).nombre, ((*registros)[n]).valor);
-  }
-  // printf("\n");
-  //
-  // for(int m = 0; m < 128; m+=8) {
-  //   printf("%d %d %d %d %d %d %d %d\n",memoria[m],memoria[m+1],memoria[m+2],memoria[m+3],memoria[m+4],memoria[m+5],memoria[m+6],memoria[m+7]);
-  // }
 }
 
 void iniciar() {

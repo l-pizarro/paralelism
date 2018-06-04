@@ -10,8 +10,6 @@
 
 typedef struct Registro {
   int valor;
-  int largo;
-  int* memoria;
   char* nombre;
 } Registro;
 

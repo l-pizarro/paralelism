@@ -22,7 +22,7 @@ void liberarRegistros(Registro* r) {
 
   for (i = 0; i < 32; i++) {
     free(r[i].nombre);
-    free(r[i].memoria);
   }
+  
   free(r);
 }

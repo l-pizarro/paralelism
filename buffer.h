@@ -19,7 +19,6 @@ typedef struct IDEX {
   int signoExtendido;
 
   // Control
-
   int regDst;
   int aluOp0;
   int aluOp1;
@@ -47,22 +46,20 @@ typedef struct EXMEM {
 } EXMEM;
 
 typedef struct MEMWB {
-  int aluResultado;
-  int registroRd;
-  int dataMemoria;
+  int datoRegistro;
+  int destino;
+  int datoMemoria;
 
   // Control
   int memtoReg;
   int regWrite;
+  
 } MEMWB;
 
 
 IFID* ifId();
-
 IDEX* idEx();
-
 EXMEM* exMem();
-
 MEMWB* memWb();
 
 void printIFID(IFID* buffer);
