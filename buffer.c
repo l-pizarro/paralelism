@@ -36,5 +36,5 @@ void printEXMEM(EXMEM* buffer) {
   printf("[ EX/MEM ] >  Alu:%5d  Dir:%4d  rd:%5d  RWr:%4d\n", buffer->aluResultado, buffer->direccionMemoria, buffer->registroRd, buffer->regWrite);
 }
 void printMEMWB(MEMWB* buffer) {
-  printf("[ MEM/WB ] >  Alu:%5d  Reg:%4d  DaM:%4d\n", buffer->datoRegistro, buffer->destino, buffer->datoMemoria);
+  printf("[ MEM/WB ] >  Dre:%5d  Reg:%4d  DaM:%4d\n", buffer->datoRegistro, buffer->destino, buffer->datoMemoria);
 }
