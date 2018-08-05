@@ -2,13 +2,6 @@
 
 #define SEPARADOR " ,():\n"
 
-void print(int largo, char** arreglo) {
-  int i;
-  for (i = 0; i < largo; i++) {
-    printf("%s\n", arreglo[i]);
-  }
-}
-
 void obtenerTipoInstruccion(char* instruccion, int* tipo) {
   if (instruccion != NULL) {
     if (!strcmp(instruccion, "nop")){
@@ -69,14 +62,13 @@ void obtenerNroRegistro(Registro** registros, char* registro, int* nroRegistro) 
   }
 }
 
-void obtenerEtiquetaJump(char* etiqueta, char** instrucciones, int nroInstrucciones, int* indice) {
+void obtenerEtiqueta(char* etiqueta, char** instrucciones, int nroInstrucciones, int* indice) {
   int i;
 
   for (i = 0; i < nroInstrucciones; i++) {
     if (strstr(instrucciones[i], ":") != NULL) {
       if (strstr(instrucciones[i], etiqueta) != NULL) {
         *indice = i;
-        printf("LABEL: %s\n", instrucciones[i]);
         break;
       }
     }
@@ -96,13 +88,18 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
   int etiquetas = 0;
   int* MEMORIA  = (int*)calloc(128, sizeof(int));
 
-  MEMORIA[4]    = 7;
+  FILE* csv1 = fopen("S1.csv", "w");
+  FILE* csv2 = fopen("S2.csv", "w");
+
+
+  fprintf(csv1, "Ciclo;IF;ID;EX;MEM;WB\n");
+  fprintf(csv2, "Ciclo;Datos;Control\n");
 
   int ciclo = 1;
-
+  int volver = 0;
   while (indice < nroInstrucciones + 4) {
-    printf("CICLO %d\n", ciclo);
-
+    fprintf(csv1, "%d", ciclo);
+    fprintf(csv2, "%d", ciclo);
     char* aux1  = NULL;
     char* aux2  = NULL;
     char* aux3  = NULL;
@@ -124,9 +121,13 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
     int forwardB     = 0;
     int jump         = 0;
     int stall        = 0;
+    int beqTaken     = 0;
+    int imp          = 0;
 
     // ETAPA IF
     if (indice < nroInstrucciones) {
+      imp = indice;
+
       if (strstr(instrucciones[indice], "j") != NULL) {
         temp = (char*)calloc(strlen(instrucciones[indice]), sizeof(char));
         strcpy(temp, instrucciones[indice]);
@@ -136,30 +137,51 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
         aux3  = strtok(NULL, SEPARADOR);
         aux4  = strtok(NULL, SEPARADOR);
 
-        obtenerEtiquetaJump(aux2, instrucciones, nroInstrucciones, &jump);
+        obtenerEtiqueta(aux2, instrucciones, nroInstrucciones, &jump);
       }
+      else if (strstr(instrucciones[indice], "beq") != NULL) {
+        temp = (char*)calloc(strlen(instrucciones[indice]), sizeof(char));
+        strcpy(temp, instrucciones[indice]);
+
+        aux1  = strtok(temp, SEPARADOR);
+        aux2  = strtok(NULL, SEPARADOR);
+        aux3  = strtok(NULL, SEPARADOR);
+        aux4  = strtok(NULL, SEPARADOR);
+
+        obtenerEtiqueta(aux4, instrucciones, nroInstrucciones, &jump);
+        volver = indice + 1;
+      }
+
       else {
         if (strstr(instrucciones[indice], ":") != NULL) {
           indice++;
+          imp++;
           etiquetas++;
 
         }
-        else {
-          temp = (char*)calloc(strlen(instrucciones[indice]), sizeof(char));
-          strcpy(temp, instrucciones[indice]);
+        temp = (char*)calloc(strlen(instrucciones[indice]), sizeof(char));
+        strcpy(temp, instrucciones[indice]);
 
-          aux1  = strtok(temp, SEPARADOR);
-          aux2  = strtok(NULL, SEPARADOR);
-          aux3  = strtok(NULL, SEPARADOR);
-          aux4  = strtok(NULL, SEPARADOR);
-        }
+        aux1  = strtok(temp, SEPARADOR);
+        aux2  = strtok(NULL, SEPARADOR);
+        aux3  = strtok(NULL, SEPARADOR);
+        aux4  = strtok(NULL, SEPARADOR);
       }
-      printf("IF\n");
+      char* impresion = (char*)calloc(strlen(instrucciones[indice]) - 1, sizeof(char));
+      strncpy(impresion, instrucciones[indice], strlen(instrucciones[indice]) - 1);
+      fprintf(csv1, ";%s", impresion);
+      free(impresion);
+    }
+    else {
+      fprintf(csv1, ";-");
     }
 
     // ETAPA ID
     if (ciclo > 1 && indice < nroInstrucciones + 1) {
-
+      char* impresion = (char*)calloc(strlen(instrucciones[IFID->imp]) - 1, sizeof(char));
+      strncpy(impresion, instrucciones[IFID->imp], strlen(instrucciones[IFID->imp]) - 1);
+      fprintf(csv1, ";%s", impresion);
+      free(impresion);
       obtenerTipoInstruccion(IFID->extracto1, &instruccion);
       actualizarControl(&CONTROL, instruccion);
       if (instruccion) {
@@ -179,18 +201,22 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
           offset = atoi(IFID->extracto3);
         }
         else if (instruccion == 9) {
-
-        }
-
-        else {
-
+          obtenerNroRegistro(registros, IFID->extracto2, &rt);
+          obtenerNroRegistro(registros, IFID->extracto3, &rs);
+          offset = 1;
         }
       }
-      printf("ID\n");
+    }
+    else {
+      fprintf(csv1, ";-");
     }
 
     // ETAPA EX
     if (ciclo > 2 && indice < nroInstrucciones + 2) {
+      char* impresion = (char*)calloc(strlen(instrucciones[IDEX->imp]) - 1, sizeof(char));
+      strncpy(impresion, instrucciones[IDEX->imp], strlen(instrucciones[IDEX->imp]) - 1);
+      fprintf(csv1, ";%s", impresion);
+      free(impresion);
       if (IDEX->memRead && ((IDEX->registroRt == rs) || (IDEX->registroRt == rt))) {
 
         char* instruccionPostergada = (char*)calloc(strlen(instrucciones[indice - 1]), sizeof(char));
@@ -213,22 +239,31 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
       forwardA = 0;
       forwardB = 0;
 
+      int registroConflicto = 0;
+
       if (EXMEM->regWrite && (EXMEM->registroRd == IDEX->registroRs)) {
-        printf("FW 1\n");
         forwardA = 1;
+        registroConflicto = EXMEM->registroRd;
       }
       if (MEMWB->regWrite && (MEMWB->destino == IDEX->registroRs)) {
-        printf("FW 3\n");
         forwardA = 2;
+        EXMEM->registroRd = MEMWB->destino;
       }
 
       if (EXMEM->regWrite && (EXMEM->registroRd == IDEX->registroRt)) {
-        printf("FW 2\n");
         forwardB = 1;
+        registroConflicto = EXMEM->registroRd;
       }
       if (MEMWB->regWrite && (MEMWB->destino == IDEX->registroRt)) {
-        printf("FW 4\n");
         forwardB = 2;
+        registroConflicto = MEMWB->destino;
+      }
+
+      if (forwardA) {
+        fprintf(csv2, ";%s", (*registros)[registroConflicto].nombre);
+      }
+      else {
+        fprintf(csv2, ";-");
       }
 
       switch (IDEX->instruccion) {
@@ -249,7 +284,6 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
         }
         else if (forwardA == 2) {
           aluResultado = MEMWB->datoMemoria + ((*registros)[IDEX->registroRt]).valor;
-            printf("\n\n ALU: %d\n", aluResultado);
         }
         else if (forwardB == 2) {
           aluResultado = ((*registros)[IDEX->registroRs]).valor + MEMWB->datoMemoria;
@@ -356,7 +390,6 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
         break;
         case 7:
         regDestinoEx = IDEX->registroRt;
-        printf("El load word se guarda en %d\n", regDestinoEx);
         if (forwardA == 1) {
           direccionMem = (abs(EXMEM->aluResultado) + (IDEX->signoExtendido/4))%128;
         }
@@ -398,18 +431,100 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
         }
         break;
         case 9:
+        if (IDEX->signoExtendido) {
+          if (forwardA == 1 && forwardB == 1) {
+            if (EXMEM->aluResultado != EXMEM->aluResultado) {
+              beqTaken = -1;
+            }
+          }
+          else if (forwardA == 1) {
+            if (EXMEM->aluResultado != ((*registros)[IDEX->registroRt]).valor) {
+              beqTaken = -1;
+            }
+          }
+          else if (forwardB == 1) {
+            if (EXMEM->aluResultado != ((*registros)[IDEX->registroRs]).valor) {
+              beqTaken = -1;
+            }
+          }
+          else if (forwardA == 2 && forwardB == 2) {
+            if (MEMWB->datoMemoria != MEMWB->datoMemoria) {
+              beqTaken = -1;
+            }
+          }
+          else if (forwardA == 2) {
+            if (MEMWB->datoMemoria != ((*registros)[IDEX->registroRt]).valor) {
+              beqTaken = -1;
+            }
+          }
+          else if (forwardB == 2) {
+            if (MEMWB->datoMemoria != ((*registros)[IDEX->registroRs]).valor) {
+              beqTaken = -1;
+            }
+          }
+          else {
+            if (((*registros)[IDEX->registroRt]).valor != ((*registros)[IDEX->registroRs]).valor) {
+              beqTaken = -1;
+            }
+          }
+
+          break;
+        }
         break;
         case 10:
         break;
         default:
         break;
       }
-
-      printf("EX\n");
+    }
+    else {
+      fprintf(csv1, ";-");
+      fprintf(csv2, ";-");
     }
 
     // ETAPA MEM
     if (ciclo > 3 && indice < nroInstrucciones + 3) {
+      char* impresion = (char*)calloc(strlen(instrucciones[EXMEM->imp]) - 1, sizeof(char));
+      strncpy(impresion, instrucciones[EXMEM->imp], strlen(instrucciones[EXMEM->imp]) - 1);
+      fprintf(csv1, ";%s", impresion);
+      free(impresion);
+      if (EXMEM->beqTaken == -1) {
+        aux1 = NULL;
+        aux2 = NULL;
+        aux3 = NULL;
+        aux4 = NULL;
+        instruccion = 0;
+        rs = 0;
+        rt = 0;
+        rd = 0;
+        offset = 0;
+        CONTROL->regDst = 0;
+        CONTROL->aluOp0 = 0;
+        CONTROL->aluOp1 = 0;
+        CONTROL->aluSrc = 0;
+        CONTROL->branch = 0;
+        CONTROL->memRead = 0;
+        CONTROL->memWrite = 0;
+        CONTROL->memtoReg = 0;
+        CONTROL->regWrite = 0;
+        aluResultado = 0;
+        regDestinoEx = 0;
+        direccionMem = 0;
+        IDEX->branch = 0;
+        IDEX->memRead = 0;
+        IDEX->memWrite = 0;
+        IDEX->memtoReg = 0;
+        IDEX->regWrite = 0;
+        beqTaken = 0;
+        indice = volver - 1;
+        volver = 0;
+        printf("hay stall por beq\n");
+        fprintf(csv2, ";si");
+      }
+      else {
+        fprintf(csv2, ";-");
+      }
+
       if (EXMEM->memRead == 1 && EXMEM->memWrite == 0) {
         destino      = EXMEM->registroRd;
         datoMemoria = MEMORIA[EXMEM->direccionMemoria];
@@ -421,21 +536,30 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
         datoRegistro = EXMEM->aluResultado;
         destino      = EXMEM->registroRd;
       }
-      printf("MEM\n");
+    }
+    else {
+      fprintf(csv1, ";-");
+      fprintf(csv2, ";-");
     }
 
     // ETAPA WB
     if (ciclo > 4 && indice < nroInstrucciones + 4) {
+      char* impresion = (char*)calloc(strlen(instrucciones[MEMWB->imp]) - 1, sizeof(char));
+      strncpy(impresion, instrucciones[MEMWB->imp], strlen(instrucciones[MEMWB->imp]) - 1);
+      fprintf(csv1, ";%s", impresion);
+      free(impresion);
       if (MEMWB->memtoReg == 1 && MEMWB->regWrite == 1) {
         ((*registros)[MEMWB->destino]).valor = MEMWB->datoMemoria;
         printf("%d\n", MEMWB->datoMemoria);
       }
       else if (MEMWB->memtoReg == 0 && MEMWB->regWrite == 1){
         ((*registros)[MEMWB->destino]).valor = MEMWB->datoRegistro;
-        printf("%d\n", MEMWB->datoRegistro);
       }
-      printf("WB\n");
     }
+    else {
+      fprintf(csv1, ";-");
+    }
+
 
     // PUSH INFORMACION
     // MEM
@@ -445,6 +569,7 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
     MEMWB->datoMemoria  = datoMemoria;
     MEMWB->memtoReg     = EXMEM->memtoReg;
     MEMWB->regWrite     = EXMEM->regWrite;
+    MEMWB->imp          = EXMEM->imp;
     // EX
     EXMEM->aluResultado     = aluResultado;
     EXMEM->registroRd       = regDestinoEx;
@@ -454,6 +579,8 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
     EXMEM->memWrite         = IDEX->memWrite;
     EXMEM->memtoReg         = IDEX->memtoReg;
     EXMEM->regWrite         = IDEX->regWrite;
+    EXMEM->beqTaken         = beqTaken;
+    EXMEM->imp              = IDEX->imp;
     // ID
     IDEX->instruccion    = instruccion;
     IDEX->registroRs     = rs;
@@ -469,18 +596,14 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
     IDEX->memWrite       = CONTROL->memWrite;
     IDEX->memtoReg       = CONTROL->memtoReg;
     IDEX->regWrite       = CONTROL->regWrite;
+    IDEX->imp            = IFID->imp;
     // IF
     IFID->extracto1 = aux1;
     IFID->extracto2 = aux2;
     IFID->extracto3 = aux3;
     IFID->extracto4 = aux4;
+    IFID->imp = imp;
 
-
-    printIFID(IFID);
-    printIDEX(IDEX);
-    printEXMEM(EXMEM);
-    printMEMWB(MEMWB);
-    printf("\n\n");
 
     if (!stall) {
       if (jump) {
@@ -493,28 +616,60 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
     else {
       stall = 0;
     }
-
     ciclo ++;
+    fprintf(csv1, "\n");
+    fprintf(csv2, "\n");
   }
+  fclose(csv1);
+  fclose(csv2);
 
-  for (int a = 0; a < 32; a++) {
-    printf("%5s: %3d\n", ((*registros)[a]).nombre, ((*registros)[a]).valor);
-  }
-
-  printf("\n  > %d\n", MEMORIA[99]);
-
+  free(IFID->extracto1);
+  free(IFID->extracto2);
+  free(IFID->extracto3);
+  free(IFID->extracto4);
+  free(IFID);
+  free(IDEX);
+  free(EXMEM);
+  free(MEMWB);
+  free(CONTROL);
+  free(MEMORIA);
 }
 
 void iniciar() {
+  int i;
   int nroInstrucciones = 0;
   int nroRegistros     = 0;
+  int validez          = 0;
+  printf("\n=====================================\n");
 
-  //printf("Ingrese archivo con instrucciones\n");
-  char** instrucciones = leerArchivo(&nroInstrucciones);
-  //printf("Ingrese archivo con registros\n");
-  char** infoRegistros = leerArchivo(&nroRegistros);
+  char** instrucciones = leerArchivo(&nroInstrucciones, 0, &validez);
+
+  char** infoRegistros = leerArchivo(&nroRegistros, 1, &validez);
 
   Registro* registros  = crearRegistros(nroRegistros, infoRegistros);
 
-  ejecutar(instrucciones, nroInstrucciones, &registros);
+  if (validez == 2) {
+    ejecutar(instrucciones, nroInstrucciones, &registros);
+    printf("\n * Archivos generados exitosamente *\n");
+    printf("\n=====================================\n");
+  }
+  else {
+    printf("\n * Los archivos no se han generado*\n");
+    printf("\n=====================================\n");
+  }
+
+  for (i = 0; i < 32; i++) {
+    free(registros[i].nombre);
+  }
+  free(registros);
+
+  for (i = 0; i < nroInstrucciones; i++) {
+    free(instrucciones[i]);
+  }
+  free(instrucciones);
+
+  for (i = 0; i < nroInstrucciones; i++) {
+    free(infoRegistros[i]);
+  }
+  free(infoRegistros);
 }

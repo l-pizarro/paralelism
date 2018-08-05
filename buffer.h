@@ -1,6 +1,12 @@
 #pragma once
 #include "stdlib.h"
 
+// Estructuras IFID IDEX EXMEM MEMWB
+//  Representación de los registro (Hardware) a través de
+//  valores enteros y strings para el almacenamiento de la
+//  información durante el transcurso de la ejecucion del
+//  pipeline de 5 etapas
+
 typedef struct IFID {
   int   instruccionActual;
   int   instruccionSgte;
@@ -8,6 +14,7 @@ typedef struct IFID {
   char* extracto2;
   char* extracto3;
   char* extracto4;
+  int imp;
 
 } IFID;
 
@@ -17,6 +24,8 @@ typedef struct IDEX {
   int registroRt;
   int registroRd;
   int signoExtendido;
+  int imp;
+
 
   // Control
   int regDst;
@@ -35,6 +44,9 @@ typedef struct EXMEM {
   int aluResultado;
   int registroRd;
   int direccionMemoria;
+  int beqTaken;
+  int imp;
+
 
   // Control
   int branch;
@@ -49,11 +61,13 @@ typedef struct MEMWB {
   int datoRegistro;
   int destino;
   int datoMemoria;
+  int beqTaken;
+  int imp;
 
   // Control
   int memtoReg;
   int regWrite;
-  
+
 } MEMWB;
 
 
@@ -61,8 +75,3 @@ IFID* ifId();
 IDEX* idEx();
 EXMEM* exMem();
 MEMWB* memWb();
-
-void printIFID(IFID* buffer);
-void printIDEX(IDEX* buffer);
-void printEXMEM(EXMEM* buffer);
-void printMEMWB(MEMWB* buffer);
