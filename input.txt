@@ -1,2 +1,0 @@
-/Users/bloem/Desktop/Test/M1.asm
-/Users/bloem/Desktop/Test/M2.txt

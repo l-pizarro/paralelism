@@ -518,7 +518,7 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
         beqTaken = 0;
         indice = volver - 1;
         volver = 0;
-        printf("hay stall por beq\n");
+        // Stall por beq
         fprintf(csv2, ";si");
       }
       else {
@@ -550,7 +550,6 @@ void ejecutar(char** instrucciones, int nroInstrucciones, Registro** registros) 
       free(impresion);
       if (MEMWB->memtoReg == 1 && MEMWB->regWrite == 1) {
         ((*registros)[MEMWB->destino]).valor = MEMWB->datoMemoria;
-        printf("%d\n", MEMWB->datoMemoria);
       }
       else if (MEMWB->memtoReg == 0 && MEMWB->regWrite == 1){
         ((*registros)[MEMWB->destino]).valor = MEMWB->datoRegistro;
